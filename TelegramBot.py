@@ -5,7 +5,7 @@ import subprocess
 from flask import Flask, jsonify, request
 
 # Configuración del bot de Telegram
-BOT_TOKEN = 'TU_TOKEN_DEL_BOT'
+BOT_TOKEN = '7814318271:AAGeY5_LcIwpt2h-anr-7NDTi5u_Cyik0cI'
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Configuración del servidor Flask
