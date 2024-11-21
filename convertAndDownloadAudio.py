@@ -1,40 +1,38 @@
-import requests
+import subprocess
+from flask import Flask, jsonify, send_file
+from pydub import AudioSegment
 import os
 
-# Configuración
-SERVER_URL = 'http://127.0.0.1:5000'  # Cambia si el servidor Flask está en otro host
-UPLOAD_FOLDER = '/data/data/com.termux/files/home/uploads'
-OGG_FILE = os.path.join(UPLOAD_FOLDER, 'audio.ogg')
-MP3_FILE = os.path.join(UPLOAD_FOLDER, 'audio.mp3')
+# Configuración del servidor Flask
+app = Flask(__name__)
 
-def upload_and_convert_audio():
-    """Sube el archivo OGG al servidor y solicita la conversión a MP3."""
-    # Verificar si el archivo OGG existe
-    if not os.path.exists(OGG_FILE):
-        print(f"El archivo {OGG_FILE} no existe. Asegúrate de que esté disponible.")
-        return
+# Ruta donde se almacenarán los archivos de audio
+UPLOAD_FOLDER = '/data/data/com.termux/files/home/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@app.route('/convert_audio', methods=['POST'])
+def convert_audio():
+    """Convertir archivo OGG a MP3 y reproducirlo."""
+    ogg_file = os.path.join(UPLOAD_FOLDER, 'audio.ogg')
+    mp3_file = os.path.join(UPLOAD_FOLDER, 'audio.mp3')
+
+    if not os.path.exists(ogg_file):
+        return jsonify({"error": "Archivo OGG no encontrado"}), 404
 
     try:
-        # Enviar solicitud de conversión
-        print("Solicitando conversión del archivo OGG a MP3...")
-        response = requests.post(f"{SERVER_URL}/convert_audio")
-        if response.status_code == 200:
-            data = response.json()
-            download_url = data.get("download_url")
-            print("Conversión exitosa. Descargando MP3...")
-            
-            # Descargar el archivo MP3
-            download_response = requests.get(f"{SERVER_URL}{download_url}")
-            if download_response.status_code == 200:
-                with open(MP3_FILE, 'wb') as mp3_file:
-                    mp3_file.write(download_response.content)
-                print(f"Archivo MP3 descargado en: {MP3_FILE}")
-            else:
-                print("Error al descargar el archivo MP3.")
-        else:
-            print(f"Error en la conversión: {response.json().get('error')}")
-    except Exception as e:
-        print(f"Error durante la conversión o descarga: {str(e)}")
+        # Convertir el archivo a MP3
+        audio = AudioSegment.from_file(ogg_file, format="ogg")
+        audio.export(mp3_file, format="mp3")
 
-if __name__ == "__main__":
-    upload_and_convert_audio()
+        # Reproducir el archivo MP3
+        subprocess.run(['play', mp3_file], check=True)  # Usa 'play' de SoX
+        # Alternativamente, usa MPV:
+        # subprocess.run(['mpv', mp3_file], check=True)
+
+        return jsonify({"message": "Archivo convertido y reproducido"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    # Ejecutar el servidor Flask
+    app.run(host='127.0.0.1', port=5000)
