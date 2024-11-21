@@ -56,7 +56,11 @@ def convert_audio():
         audio.export(mp3_file, format="mp3")
 
         # Reproducir el archivo usando Termux API
-        subprocess.run(['termux-media-player', 'play', mp3_file], check=True)
+        #subprocess.run(['termux-media-player', 'play', mp3_file], check=True)
+
+        # Reproducir el archivo usando el reproductor de Android (am)
+        subprocess.run(['am', 'start', '-a', 'android.intent.action.VIEW', '-d', f'file://{mp3_file}', '-t', 'audio/mpeg'])
+
 
         return jsonify({"message": "Archivo convertido y reproducido"}), 200
     except Exception as e:
