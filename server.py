@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, send_file
 from pydub import AudioSegment
 import os
+import subprocess
 
 # Configuración del servidor Flask
 app = Flask(__name__)
@@ -43,8 +44,7 @@ def download_audio(filename):
 
 @app.route('/convert_audio', methods=['POST'])
 def convert_audio():
-    """Convertir archivo OGG a MP3."""
-    # Esperamos que el cliente especifique el archivo a convertir
+    """Convertir archivo OGG a MP3 y reproducirlo."""
     ogg_file = os.path.join(UPLOAD_FOLDER, 'audio.ogg')
     mp3_file = os.path.join(UPLOAD_FOLDER, 'audio.mp3')
 
@@ -55,7 +55,13 @@ def convert_audio():
         # Convertir el archivo a MP3
         audio = AudioSegment.from_file(ogg_file, format="ogg")
         audio.export(mp3_file, format="mp3")
-        return jsonify({"message": "Archivo convertido", "download_url": f"/download_audio/audio.mp3"}), 200
+
+        # Reproducir el archivo MP3
+        subprocess.run(['play', mp3_file], check=True)  # Usa 'play' de SoX
+        # Alternativamente, usa MPV:
+        # subprocess.run(['mpv', mp3_file], check=True)
+
+        return jsonify({"message": "Archivo convertido y reproducido"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
