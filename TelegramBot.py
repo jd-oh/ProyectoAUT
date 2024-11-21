@@ -1,44 +1,15 @@
-# Importar las bibliotecas necesarias
 import telebot
 import requests
 import subprocess
-from flask import Flask, jsonify, request
 from threading import Thread
 
 # Configuración del bot de Telegram
 BOT_TOKEN = '7814318271:AAGeY5_LcIwpt2h-anr-7NDTi5u_Cyik0cI'
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Configuración del servidor Flask
-app = Flask(__name__)
-
-# Variables para simular estados
-state = {
-    "food_container_open": False,
-    "water_container_open": False,
-    "toy_active": False
-}
-
-# Rutas del servidor Flask
-@app.route('/open_food', methods=['GET'])
-def open_food():
-    state["food_container_open"] = True
-    return jsonify({"message": "Contenedor de comida abierto"}), 200
-
-@app.route('/open_water', methods=['GET'])
-def open_water():
-    state["water_container_open"] = True
-    return jsonify({"message": "Contenedor de agua abierto"}), 200
-
-@app.route('/activate_toy', methods=['POST'])
-def activate_toy():
-    state["toy_active"] = True
-    return jsonify({"message": "Juguete activado"}), 200
-
-# Funciones del bot de Telegram
 @bot.message_handler(commands=['menu'])
 def send_menu(message):
-    # Crear un teclado inline con las opciones que necesitas
+    # Crear un teclado inline con las opciones necesarias
     keyboard = telebot.types.InlineKeyboardMarkup()
     keyboard.row(
         telebot.types.InlineKeyboardButton('Tomar foto', callback_data='take_photo'),
@@ -58,7 +29,7 @@ def callback_query(call):
     if call.data == 'take_photo':
         # Responder rápidamente al callback query
         bot.answer_callback_query(call.id, 'Procesando...')
-        # Llamar a la función para tomar la foto en un subproceso
+        # Ejecutar la tarea de tomar foto en un subproceso
         Thread(target=tomar_foto_y_enviar, args=(call,)).start()
 
     elif call.data == 'open_food':
@@ -86,7 +57,7 @@ def callback_query(call):
             bot.answer_callback_query(call.id, f'Error: {response.text}')
 
 def tomar_foto_y_enviar(call):
-    """Función para tomar una foto y enviarla en un subproceso."""
+    """Función para tomar una foto y enviarla."""
     try:
         # Ruta donde se guardará la foto
         photo_path = '/data/data/com.termux/files/home/foto.jpg'
@@ -99,12 +70,6 @@ def tomar_foto_y_enviar(call):
         # Notificar al usuario si ocurre un error
         bot.send_message(call.message.chat.id, f'Error al tomar la foto: {str(e)}')
 
-# Función para ejecutar el bot y el servidor Flask
-def start():
-    # Iniciar el bot en un hilo separado
-    Thread(target=lambda: bot.polling()).start()
-    # Ejecutar el servidor Flask
-    app.run(host='127.0.0.1', port=5000)
-
 if __name__ == '__main__':
-    start()
+    # Iniciar el bot
+    bot.polling()
