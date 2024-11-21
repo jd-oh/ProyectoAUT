@@ -3,6 +3,7 @@ import telebot
 import requests
 import subprocess
 from flask import Flask, jsonify, request
+from threading import Thread
 
 # Configuración del bot de Telegram
 BOT_TOKEN = '7814318271:AAGeY5_LcIwpt2h-anr-7NDTi5u_Cyik0cI'
@@ -55,16 +56,10 @@ def send_menu(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     if call.data == 'take_photo':
-        # Tomar una foto utilizando la cámara de Termux
-        try:
-            photo_path = '/data/data/com.termux/files/home/foto.jpg'
-            subprocess.run(['termux-camera-photo', photo_path], check=True)
-            # Enviar la foto al usuario
-            with open(photo_path, 'rb') as photo:
-                bot.send_photo(call.message.chat.id, photo)
-            bot.answer_callback_query(call.id, 'Foto tomada y enviada.')
-        except Exception as e:
-            bot.answer_callback_query(call.id, f'Error al tomar la foto: {str(e)}')
+        # Responder rápidamente al callback query
+        bot.answer_callback_query(call.id, 'Procesando...')
+        # Llamar a la función para tomar la foto en un subproceso
+        Thread(target=tomar_foto_y_enviar, args=(call,)).start()
 
     elif call.data == 'open_food':
         # Hacer una petición GET al servidor Flask
@@ -90,9 +85,22 @@ def callback_query(call):
         else:
             bot.answer_callback_query(call.id, f'Error: {response.text}')
 
+def tomar_foto_y_enviar(call):
+    """Función para tomar una foto y enviarla en un subproceso."""
+    try:
+        # Ruta donde se guardará la foto
+        photo_path = '/data/data/com.termux/files/home/foto.jpg'
+        # Tomar la foto usando la cámara de Termux
+        subprocess.run(['termux-camera-photo', photo_path], check=True)
+        # Enviar la foto al usuario
+        with open(photo_path, 'rb') as photo:
+            bot.send_photo(call.message.chat.id, photo, caption="¡Aquí está tu foto!")
+    except Exception as e:
+        # Notificar al usuario si ocurre un error
+        bot.send_message(call.message.chat.id, f'Error al tomar la foto: {str(e)}')
+
 # Función para ejecutar el bot y el servidor Flask
 def start():
-    from threading import Thread
     # Iniciar el bot en un hilo separado
     Thread(target=lambda: bot.polling()).start()
     # Ejecutar el servidor Flask
