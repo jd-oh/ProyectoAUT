@@ -2,10 +2,15 @@ import telebot
 import requests
 import subprocess
 from threading import Thread
+import os
 
 # Configuración del bot de Telegram
 BOT_TOKEN = '7814318271:AAGeY5_LcIwpt2h-anr-7NDTi5u_Cyik0cI'
 bot = telebot.TeleBot(BOT_TOKEN)
+
+UPLOAD_FOLDER = '/data/data/com.termux/files/home/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 @bot.message_handler(commands=['menu'])
 def send_menu(message):
@@ -47,14 +52,13 @@ def handle_voice(message):
         file_info = bot.get_file(message.voice.file_id)
         # Descargar el archivo
         downloaded_file = bot.download_file(file_info.file_path)
-        # Guardar el archivo localmente
-        audio_path = f'/data/data/com.termux/files/home/{message.voice.file_id}.ogg'
-        with open(audio_path, 'wb') as audio_file:
+        # Guardar el archivo como audio.ogg
+        ogg_path = os.path.join(UPLOAD_FOLDER, 'audio.ogg')
+        with open(ogg_path, 'wb') as audio_file:
             audio_file.write(downloaded_file)
-        
+
         # Confirmar al usuario
-        bot.reply_to(message, "¡Audio recibido y guardado!")
-        
+        bot.reply_to(message, "¡Audio recibido y guardado! Listo para convertir.")
     except Exception as e:
         bot.reply_to(message, f"Error al procesar el audio: {str(e)}")
 
