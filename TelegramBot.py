@@ -58,9 +58,17 @@ def handle_voice(message):
             audio_file.write(downloaded_file)
 
         # Confirmar al usuario
-        bot.reply_to(message, "¡Audio recibido y guardado! Listo para convertir.")
+        bot.reply_to(message, "¡Audio recibido! Iniciando la conversión y reproducción...")
+
+        # Enviar solicitud al servidor para convertir y reproducir
+        response = requests.post('http://127.0.0.1:5000/convert_audio')
+        if response.status_code == 200:
+            bot.send_message(message.chat.id, "Audio convertido y reproducido correctamente.")
+        else:
+            bot.send_message(message.chat.id, f"Error en el servidor: {response.json().get('error')}")
     except Exception as e:
         bot.reply_to(message, f"Error al procesar el audio: {str(e)}")
+
 
 if __name__ == '__main__':
     bot.polling()

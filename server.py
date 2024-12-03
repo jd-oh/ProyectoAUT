@@ -58,10 +58,10 @@ def convert_audio():
         # Reproducir el archivo usando Termux API
         subprocess.run(['termux-media-player', 'play', mp3_file], check=True)
 
-
         return jsonify({"message": "Archivo convertido y reproducido"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     # Ejecutar el servidor Flask
