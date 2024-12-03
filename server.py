@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, send_file, Response
 from pydub import AudioSegment
-import cv2
 import os
 import subprocess
+from threading import Thread
+import time
 
 # Configuración del servidor Flask
 app = Flask(__name__)
@@ -33,6 +34,8 @@ def activate_toy():
     state["toy_active"] = True
     return jsonify({"message": "Juguete activado"}), 200
 
+
+
 @app.route('/download_audio/<filename>', methods=['GET'])
 def download_audio(filename):
     """Descargar el archivo convertido a MP3."""
@@ -60,21 +63,25 @@ def convert_audio():
         return jsonify({"message": "Archivo convertido y reproducido"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+    # Ruta para almacenar capturas temporales de la cámara
+CAPTURE_PATH = '/data/data/com.termux/files/home/capture.jpg'
 
-@app.route('/video_feed')
+@app.route('/video_feed', methods=['GET'])
 def video_feed():
-    """Transmite video en tiempo real desde la cámara."""
+    """Proporciona un flujo de video en tiempo real."""
     def generate_frames():
-        cap = cv2.VideoCapture(0)  # Abre la cámara (ajusta el índice si es necesario)
         while True:
-            success, frame = cap.read()
-            if not success:
+            try:
+                # Captura una imagen de la cámara de Termux
+                subprocess.run(['termux-camera-photo', CAPTURE_PATH], check=True)
+                with open(CAPTURE_PATH, 'rb') as img:
+                    frame = img.read()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                time.sleep(0.1)  # Ajusta la frecuencia de captura según sea necesario
+            except Exception as e:
                 break
-            _, buffer = cv2.imencode('.jpg', frame)
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-        cap.release()
-
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
