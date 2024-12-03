@@ -26,8 +26,12 @@ def send_menu(message):
     keyboard.row(
         telebot.types.InlineKeyboardButton('Activar juguete', callback_data='activate_toy')
     )
+    keyboard.row(
+        telebot.types.InlineKeyboardButton('Ver video en tiempo real', url='http://127.0.0.1:5000/video_feed')
+    )
     # Enviar el menú al usuario
     bot.send_message(message.chat.id, 'Selecciona una opción:', reply_markup=keyboard)
+
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):

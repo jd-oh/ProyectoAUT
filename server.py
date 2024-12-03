@@ -1,5 +1,6 @@
-from flask import Flask, jsonify, send_file
+from flask import Flask, jsonify, send_file, Response
 from pydub import AudioSegment
+import cv2
 import os
 import subprocess
 
@@ -32,8 +33,6 @@ def activate_toy():
     state["toy_active"] = True
     return jsonify({"message": "Juguete activado"}), 200
 
-
-
 @app.route('/download_audio/<filename>', methods=['GET'])
 def download_audio(filename):
     """Descargar el archivo convertido a MP3."""
@@ -61,6 +60,22 @@ def convert_audio():
         return jsonify({"message": "Archivo convertido y reproducido"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/video_feed')
+def video_feed():
+    """Transmite video en tiempo real desde la cámara."""
+    def generate_frames():
+        cap = cv2.VideoCapture(0)  # Abre la cámara (ajusta el índice si es necesario)
+        while True:
+            success, frame = cap.read()
+            if not success:
+                break
+            _, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+        cap.release()
+
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 if __name__ == '__main__':
