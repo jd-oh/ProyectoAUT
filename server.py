@@ -5,6 +5,7 @@ import subprocess
 from threading import Thread
 import time
 import requests
+from flask import request
 
 # Configuración del servidor Flask
 app = Flask(__name__)
@@ -79,7 +80,7 @@ def video_feed():
             except Exception as e:
                 break
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
+"""
 @app.route('/activate_toy', methods=['GET'])
 def activate_toy():
     try:
@@ -92,6 +93,14 @@ def activate_toy():
             return jsonify({"error": "Error al activar el juguete en el ESP32"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+"""
+@app.route('/activate_toy', methods=['GET', 'POST'])
+def activate_toy():
+    if request.method == 'GET':
+        return jsonify({"message": "Toy activated successfully!"}), 200
+    elif request.method == 'POST':
+        data = request.json  # Si esperas datos JSON
+        return jsonify({"message": "Toy activation received!", "data": data}), 200
 
 
 if __name__ == '__main__':
