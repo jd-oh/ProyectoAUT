@@ -82,7 +82,7 @@ def video_feed():
 def open_food():
     try:
         esp32_ip = "192.168.188.135"  # Reemplaza con la IP del ESP32
-        response = requests.get(f"http://{esp32_ip}/activate_toy")
+        response = requests.get(f"http://{esp32_ip}/open_food")
         if response.status_code == 200:
             return jsonify({"message": "Dispensador de comida abierto correctamente"}), 200
         else:
