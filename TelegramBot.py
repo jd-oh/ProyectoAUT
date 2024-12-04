@@ -42,24 +42,24 @@ def callback_query(call):
     if call.data == 'take_photo':
         bot.answer_callback_query(call.id, 'Procesando...')
         Thread(target=tomar_foto_y_enviar, args=(call,)).start()
-    elif call.data == 'activate_toy':
-        bot.answer_callback_query(call.id, 'Activando juguete...')
-        Thread(target=activar_juguete, args=(call,)).start()
+    elif call.data == 'open_food':
+        bot.answer_callback_query(call.id, 'Abriendo dispensador de comida...')
+        Thread(target=abrir_comida, args=(call,)).start()
 
 
-def activar_juguete(call):
-    """Enviar solicitud al servidor Flask para activar el juguete."""
+def abrir_comida(call):
+    """Enviar solicitud al servidor Flask para abrir dispensador de comida."""
     try:
         # Cambiar la URL al endpoint del servidor Flask
-        flask_server_url = "http://127.0.0.1:5000/activate_toy"
+        flask_server_url = "http://127.0.0.1:5000/open_food"
         
         # Realizar la solicitud GET al servidor Flask
         response = requests.get(flask_server_url)
 
         if response.status_code == 200:
-            bot.send_message(call.message.chat.id, "¡Juguete activado correctamente!")
+            bot.send_message(call.message.chat.id, "¡Dispensador de comida abierto correctamente!")
         else:
-            bot.send_message(call.message.chat.id, f"Error al activar el juguete: {response.json().get('error')}")
+            bot.send_message(call.message.chat.id, f"Error al abrir el dispensador de comida: {response.json().get('error')}")
     except Exception as e:
         bot.send_message(call.message.chat.id, f"Error al comunicarse con el servidor: {str(e)}")
 

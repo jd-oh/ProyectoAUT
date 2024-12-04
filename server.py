@@ -21,10 +21,7 @@ state = {
     "toy_active": False
 }
 
-@app.route('/open_food', methods=['GET'])
-def open_food():
-    state["food_container_open"] = True
-    return jsonify({"message": "Contenedor de comida abierto"}), 200
+
 
 @app.route('/open_water', methods=['GET'])
 def open_water():
@@ -81,16 +78,16 @@ def video_feed():
                 break
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/activate_toy', methods=['GET'])
-def activate_toy():
+@app.route('/open_food', methods=['GET'])
+def open_food():
     try:
         esp32_ip = "192.168.188.135"  # Reemplaza con la IP del ESP32
         response = requests.get(f"http://{esp32_ip}/activate_toy")
         if response.status_code == 200:
-            state["toy_active"] = True
-            return jsonify({"message": "Juguete activado correctamente"}), 200
+            state["food_opened"] = True
+            return jsonify({"message": "Dispensador de comida abierto correctamente"}), 200
         else:
-            return jsonify({"error": "Error al activar el juguete en el ESP32"}), 500
+            return jsonify({"error": "Error al abrir el dispensador de comida en el ESP32"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
