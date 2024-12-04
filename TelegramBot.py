@@ -27,10 +27,10 @@ def send_menu(message):
         telebot.types.InlineKeyboardButton('Activar juguete', callback_data='activate_toy')
     )
     keyboard.row(
-        telebot.types.InlineKeyboardButton('Ver video en tiempo real', url='http://192.168.20.89:6677/')
+        telebot.types.InlineKeyboardButton('Ver video en tiempo real', url='http://192.168.188.200:6677/')
     )
     keyboard.row(
-        telebot.types.InlineKeyboardButton('Video en tiempo real (segunda opción)', url='http://192.168.20.89:5000/video_feed')
+        telebot.types.InlineKeyboardButton('Video en tiempo real (segunda opción)', url='http://192.168.188.200:5000/video_feed')
     )
     
     # Enviar el menú al usuario
