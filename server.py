@@ -80,7 +80,7 @@ def video_feed():
                 break
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/activate_toy', methods=['POST'])
+@app.route('/activate_toy', methods=['GET'])
 def activate_toy():
     try:
         esp32_ip = "192.168.188.135"  # Reemplaza con la IP del ESP32
