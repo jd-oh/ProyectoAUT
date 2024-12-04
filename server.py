@@ -30,11 +30,6 @@ def open_water():
     state["water_container_open"] = True
     return jsonify({"message": "Contenedor de agua abierto"}), 200
 
-@app.route('/activate_toy', methods=['POST'])
-def activate_toy():
-    state["toy_active"] = True
-    return jsonify({"message": "Juguete activado"}), 200
-
 
 
 @app.route('/download_audio/<filename>', methods=['GET'])
