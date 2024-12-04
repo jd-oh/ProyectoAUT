@@ -21,7 +21,6 @@ def send_menu(message):
     )
     keyboard.row(
         telebot.types.InlineKeyboardButton('Abrir contenedor de comida', callback_data='open_food'),
-        telebot.types.InlineKeyboardButton('Abrir contenedor de agua', callback_data='open_water')
     )
     keyboard.row(
         telebot.types.InlineKeyboardButton('Activar juguete', callback_data='activate_toy')
@@ -45,6 +44,24 @@ def callback_query(call):
     elif call.data == 'open_food':
         bot.answer_callback_query(call.id, 'Abriendo dispensador de comida...')
         Thread(target=abrir_comida, args=(call,)).start()
+    elif call.data == 'activate_toy':
+        bot.answer_callback_query(call.id, 'Activando juguete...')
+        Thread(target=activar_juguete, args=(call,)).start()
+
+
+def activar_juguete(call):
+    """Enviar solicitud al servidor Flask para activar el juguete."""
+    try:
+        flask_server_url = "http://127.0.0.1:5000/activate_toy"
+        response = requests.get(flask_server_url)
+
+        if response.status_code == 200:
+            bot.send_message(call.message.chat.id, "¡Juguete activado correctamente!")
+        else:
+            bot.send_message(call.message.chat.id, f"Error al activar el juguete: {response.json().get('error')}")
+    except Exception as e:
+        bot.send_message(call.message.chat.id, f"Error al comunicarse con el servidor: {str(e)}")
+
 
 
 def abrir_comida(call):
@@ -62,6 +79,7 @@ def abrir_comida(call):
             bot.send_message(call.message.chat.id, f"Error al abrir el dispensador de comida: {response.json().get('error')}")
     except Exception as e:
         bot.send_message(call.message.chat.id, f"Error al comunicarse con el servidor: {str(e)}")
+
 
 
 def tomar_foto_y_enviar(call):
