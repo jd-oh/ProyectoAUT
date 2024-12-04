@@ -23,7 +23,8 @@ def send_menu(message):
         telebot.types.InlineKeyboardButton('Abrir contenedor de comida', callback_data='open_food'),
     )
     keyboard.row(
-        telebot.types.InlineKeyboardButton('Activar juguete', callback_data='activate_toy')
+        telebot.types.InlineKeyboardButton('Activar juguete', callback_data='activate_toy'),
+        telebot.types.InlineKeyboardButton('Desactivar juguete', callback_data='deactivate_toy')
     )
     keyboard.row(
         telebot.types.InlineKeyboardButton('Ver video en tiempo real', url='http://192.168.188.200:6677/')
@@ -34,7 +35,6 @@ def send_menu(message):
     
     # Enviar el menú al usuario
     bot.send_message(message.chat.id, 'Selecciona una opción:', reply_markup=keyboard)
-
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -47,6 +47,23 @@ def callback_query(call):
     elif call.data == 'activate_toy':
         bot.answer_callback_query(call.id, 'Activando juguete...')
         Thread(target=activar_juguete, args=(call,)).start()
+    elif call.data == 'deactivate_toy':
+        bot.answer_callback_query(call.id, 'Desactivando juguete...')
+        Thread(target=desactivar_juguete, args=(call,)).start()
+
+
+def desactivar_juguete(call):
+    """Enviar solicitud al servidor Flask para desactivar el juguete."""
+    try:
+        flask_server_url = "http://127.0.0.1:5000/deactivate_toy"
+        response = requests.get(flask_server_url)
+
+        if response.status_code == 200:
+            bot.send_message(call.message.chat.id, "¡Juguete desactivado correctamente!")
+        else:
+            bot.send_message(call.message.chat.id, f"Error al desactivar el juguete: {response.json().get('error')}")
+    except Exception as e:
+        bot.send_message(call.message.chat.id, f"Error al comunicarse con el servidor: {str(e)}")
 
 
 def activar_juguete(call):

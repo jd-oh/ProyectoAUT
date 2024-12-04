@@ -101,6 +101,19 @@ def activate_toy():
             return jsonify({"error": "Error al activar el juguete en el ESP32"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/deactivate_toy', methods=['GET'])
+def deactivate_toy():
+    try:
+        esp32_ip = "192.168.188.135"  # Reemplaza con la IP del ESP32
+        response = requests.get(f"http://{esp32_ip}/deactivate_toy")
+        if response.status_code == 200:
+            return jsonify({"message": "Juguete desactivado correctamente"}), 200
+        else:
+            return jsonify({"error": "Error al desactivar el juguete en el ESP32"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 
