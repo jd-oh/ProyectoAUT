@@ -4,6 +4,7 @@ import os
 import subprocess
 from threading import Thread
 import time
+import requests
 
 # Configuración del servidor Flask
 app = Flask(__name__)
@@ -83,6 +84,19 @@ def video_feed():
             except Exception as e:
                 break
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/activate_toy', methods=['POST'])
+def activate_toy():
+    try:
+        esp32_ip = "192.168.188.135"  # Reemplaza con la IP del ESP32
+        response = requests.get(f"http://{esp32_ip}/activate_toy")
+        if response.status_code == 200:
+            state["toy_active"] = True
+            return jsonify({"message": "Juguete activado correctamente"}), 200
+        else:
+            return jsonify({"error": "Error al activar el juguete en el ESP32"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
