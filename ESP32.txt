@@ -1,0 +1,115 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <ESP32Servo.h>
+
+// Configuración de red WiFi
+const char* ssid = "RedMascota";
+const char* password = "123456789";
+
+// Configuración de los servos
+Servo foodServo;
+Servo toyServo;
+const int foodServoPin = 18; // Pin para el servo del dispensador
+const int toyServoPin = 19;  // Pin para el servo del juguete
+
+// Configuración del láser
+const int laserPin = 23; // Pin donde está conectado el láser
+
+// Configuración del servidor web
+WebServer server(80);
+
+// Variable de estado para el movimiento continuo del juguete
+volatile bool toyActive = false;
+
+// Función para mover el juguete de un lado a otro
+void moveToy() {
+  while (toyActive) {
+    Serial.println("Moviendo juguete: Extremo 1");
+    toyServo.write(0);    // Mover a un extremo
+    delay(1000);          // Esperar 1 segundo
+    Serial.println("Moviendo juguete: Extremo 2");
+    toyServo.write(60);   // Mover al otro extremo
+    delay(1000);          // Esperar 1 segundo
+  }
+  Serial.println("Deteniendo juguete");
+  toyServo.write(90); // Detener el servo en posición neutral
+}
+
+// Manejar solicitud para abrir el dispensador de comida
+void handleOpenFood() {
+  Serial.println("Comando recibido: Abriendo dispensador de comida");
+  foodServo.write(0);  // Mover el servo a 0 grados
+  delay(1000);         // Esperar 1 segundo
+  foodServo.write(90); // Regresar a la posición neutra
+  server.send(200, "application/json", "{\"message\":\"Dispensador de comida abierto\"}");
+}
+
+// Manejar solicitud para activar el juguete
+void handleActivateToy() {
+  if (!toyActive) {
+    Serial.println("Comando recibido: Activando juguete");
+    toyActive = true;
+    digitalWrite(laserPin, HIGH); // Encender el láser
+    xTaskCreatePinnedToCore(
+        [](void*) { moveToy(); },
+        "ToyMovementTask",
+        1024,
+        NULL,
+        1,
+        NULL,
+        0
+    );
+    server.send(200, "application/json", "{\"message\":\"Juguete activado\"}");
+  } else {
+    server.send(200, "application/json", "{\"message\":\"El juguete ya está activo\"}");
+  }
+}
+
+// Manejar solicitud para desactivar el juguete
+void handleDeactivateToy() {
+  Serial.println("Comando recibido: Desactivando juguete");
+  toyActive = false;
+  digitalWrite(laserPin, LOW); // Apagar el láser
+  server.send(200, "application/json", "{\"message\":\"Juguete desactivado\"}");
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // Configurar WiFi
+  Serial.print("Conectando a WiFi");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Conectado a WiFi. IP: ");
+  Serial.println(WiFi.localIP());
+
+  // Configurar los servos
+  Serial.println("Inicializando servos...");
+  foodServo.attach(foodServoPin);
+  toyServo.attach(toyServoPin);
+  foodServo.write(90); // Posición inicial (neutral)
+  toyServo.write(90);  // Posición inicial (neutral)
+  Serial.println("Servos inicializados");
+
+  // Configurar el pin del láser
+  pinMode(laserPin, OUTPUT);
+  digitalWrite(laserPin, LOW); // Asegurarse de que el láser esté apagado al inicio
+
+  // Configurar las rutas del servidor web
+  server.on("/open_food", HTTP_GET, handleOpenFood);
+  server.on("/activate_toy", HTTP_GET, handleActivateToy);
+  server.on("/deactivate_toy", HTTP_GET, handleDeactivateToy);
+
+  // Iniciar el servidor
+  server.begin();
+  Serial.println("Servidor iniciado, esperando comandos...");
+}
+
+void loop() {
+  // Manejar las solicitudes entrantes
+  server.handleClient();
+}
